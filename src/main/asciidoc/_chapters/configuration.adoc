@@ -27,67 +27,65 @@
 :icons: font
 :experimental:
 
-This chapter expands upon the <<getting_started>> chapter to further explain configuration of Apache HBase.
-Please read this chapter carefully, especially the <<basic.prerequisites,Basic Prerequisites>> to ensure that your HBase testing and deployment goes smoothly, and prevent data loss.
+本章提供了基于 <<getting_started>> 章节的 Apache HBase 配置拓展.
+请认真阅读本章, 尤其是 <<basic.prerequisites,Basic Prerequisites>> ，从而保证您的HBase集群测试与部署正常，并防止数据丢失.
 
 == Configuration Files
-Apache HBase uses the same configuration system as Apache Hadoop.
-All configuration files are located in the _conf/_ directory, which needs to be kept in sync for each node on your cluster.
+Apache HBase 使用与 Apache Hadoop 一致的配置体系.
+所有的配置文件都放在 _conf/_ 目录下, 该目录需要做到多节点间保持同步一致.
 
 .HBase Configuration File Descriptions
 _backup-masters_::
-  Not present by default.
-  A plain-text file which lists hosts on which the Master should start a backup Master process, one host per line.
+  默认不存在该文件.
+  纯文本文件，列出哪些节点需要启动backup mater进程，每行一个host。
 
 _hadoop-metrics2-hbase.properties_::
-  Used to connect HBase Hadoop's Metrics2 framework.
+  用以连接 HBase Hadoop's Metrics2
   See the link:http://wiki.apache.org/hadoop/HADOOP-6728-MetricsV2[Hadoop Wiki entry] for more information on Metrics2.
-  Contains only commented-out examples by default.
+  默认仅包含注释示例.
 
 _hbase-env.cmd_ and _hbase-env.sh_::
-  Script for Windows and Linux / Unix environments to set up the working environment for HBase, including the location of Java, Java options, and other environment variables.
-  The file contains many commented-out examples to provide guidance.
+  环境配置脚本 for HBase，包含java位置、jvm选项、环境变量等。
+  默认包含众多注释示例作为指导.
 
 _hbase-policy.xml_::
-  The default policy configuration file used by RPC servers to make authorization decisions on client requests.
-  Only used if HBase <<security,security>> is enabled.
+  当客户端请求时，RPC servers所使用的权限策略配置文件。
+  当 HBase <<security,security>> 被启用时才会使用该配置.
 
 _hbase-site.xml_::
-  The main HBase configuration file.
-  This file specifies configuration options which override HBase's default configuration.
-  You can view (but do not edit) the default configuration file at _docs/hbase-default.xml_.
-  You can also view the entire effective configuration for your cluster (defaults and overrides) in the [label]#HBase Configuration# tab of the HBase Web UI.
+  HBase主配置文件.
+  在该配置中显式指定的配置会覆盖默认配置。
+  默认配置参见（请勿修改） _docs/hbase-default.xml_.
+  在 HBase Web UI 的 [label]#HBase Configuration# ，您可以看到所有集群当前生效的配置（包含默认的和重载的）。
 
 _log4j.properties_::
-  Configuration file for HBase logging via `log4j`.
+  HBase的`log4j`日志配置。
 
 _regionservers_::
-  A plain-text file containing a list of hosts which should run a RegionServer in your HBase cluster.
-  By default this file contains the single entry `localhost`.
-  It should contain a list of hostnames or IP addresses, one per line, and should only contain `localhost` if each node in your cluster will run a RegionServer on its `localhost` interface.
+  纯文本文件，列出需要启动regionServer进程的节点，每行一个host。
+  默认是一个只包含一行 `localhost` 的文件。
+  该文件应当包含一组hostnames或IP地址（每行一个）。如果集群里的每个节点都以`localhost`接口来运行`RegionServer`的话，则只需像默认一样包含`localhost`即可。
 
-.Checking XML Validity
+.验证 XML 有效性
 [TIP]
 ====
-When you edit XML, it is a good idea to use an XML-aware editor to be sure that your syntax is correct and your XML is well-formed.
-You can also use the `xmllint` utility to check that your XML is well-formed.
-By default, `xmllint` re-flows and prints the XML to standard output.
-To check for well-formedness and only print output if errors exist, use the command `xmllint -noout filename.xml`.
+您最好使用可以检查XML语法的一些IDE或编辑器。
+您也可以`xmllint` 来检查XML的语法。
+默认情况下, `xmllint` 会将xml格式化输出到标准输出流。
+如果仅用来检查语法并只希望输出错误信息, 请使用命令 `xmllint -noout filename.xml`。
 ====
-.Keep Configuration In Sync Across the Cluster
+.确保集群内配置保持同步
 [WARNING]
 ====
-When running in distributed mode, after you make an edit to an HBase configuration, make sure you copy the content of the _conf/_ directory to all nodes of the cluster.
-HBase will not do this for you.
-Use `rsync`, `scp`, or another secure mechanism for copying the configuration files to your nodes.
-For most configuration, a restart is needed for servers to pick up changes An exception is dynamic configuration.
-to be described later below.
+在分布式模式下运行HBase时, 若您编辑过HBase配置, 请确保您已将最新配置拷贝（`rsync`, `scp`, 或其他一些配置管理分发工具等）到所有节点的 _conf/_ 目录下。
+HBase不会帮你做分布式节点配置同步的事情。
+除了动态配置，其他绝大部分配置都属于静态配置，都需要HBase集群重启后生效。
 ====
 
 [[basic.prerequisites]]
-== Basic Prerequisites
+== 基础环境要求 Basic Prerequisites
 
-This section lists required services and some required system configuration.
+本章节列出了需要的一些前提服务和系统配置要求。（译者注：总之表格里只需要关注 yes 项即可，其他建议都当做 no 谨慎看待，防止挖坑。1.2+确认支持JDK8）
 
 [[java]]
 .Java
@@ -127,84 +125,78 @@ support.
 |N/A
 |===
 
-NOTE: In HBase 0.98.5 and newer, you must set `JAVA_HOME` on each node of your cluster. _hbase-env.sh_ provides a handy mechanism to do this.
+NOTE: 在 HBase 0.98.5 或更早期的版本, 您需要在每个节点的 _hbase-env.sh_ 手动设置 `JAVA_HOME` 。
 
-.Operating System Utilities
+.操作系统组件
 ssh::
-  HBase uses the Secure Shell (ssh) command and utilities extensively to communicate between cluster nodes. Each server in the cluster must be running `ssh` so that the Hadoop and HBase daemons can be managed. You must be able to connect to all nodes via SSH, including the local node, from the Master as well as any backup Master, using a shared key rather than a password. You can see the basic methodology for such a set-up in Linux or Unix systems at "<<passwordless.ssh.quickstart>>". If your cluster nodes use OS X, see the section, link:http://wiki.apache.org/hadoop/Running_Hadoop_On_OS_X_10.5_64-bit_%28Single-Node_Cluster%29[SSH: Setting up Remote Desktop and Enabling Self-Login] on the Hadoop wiki.
+  HBase 使用 `ssh` 命令及其相关组件在各节点间通信，因此每个节点都需要能运行 `ssh` 命令并且从master（包括backup的Master）到各节点之间都要能用 `ssh` 通信（包括本地节点）。`ssh` 建议使用共享密钥的模式，而不是密码模式。 Linux/Unix可参考 "<<passwordless.ssh.quickstart>>"， OSX可参考 Hadoop wiki 的 link:http://wiki.apache.org/hadoop/Running_Hadoop_On_OS_X_10.5_64-bit_%28Single-Node_Cluster%29[SSH: Setting up Remote Desktop and Enabling Self-Login] 。
 
 DNS::
-  HBase uses the local hostname to self-report its IP address. Both forward and reverse DNS resolving must work in versions of HBase previous to 0.92.0. The link:https://github.com/sujee/hadoop-dns-checker[hadoop-dns-checker] tool can be used to verify DNS is working correctly on the cluster. The project `README` file provides detailed instructions on usage.
+  HBase 使用本地 hostname 来上报IP地址. 0.92.0 及之前的版本需要确保正向/反向 DNS 解析都能生效。 link:https://github.com/sujee/hadoop-dns-checker[hadoop-dns-checker] 可以用来检查集群内的DNS解析是否正常，详情参考其中的`README`。
 
 Loopback IP::
-  Prior to hbase-0.96.0, HBase only used the IP address `127.0.0.1` to refer to `localhost`, and this could not be configured.
+  hbase-0.96.0 之前的版本使用 IP address `127.0.0.1` 来指向 `localhost`, 这个一般不需要显式配置.
   See <<loopback.ip,Loopback IP>> for more details.
 
 NTP::
-  The clocks on cluster nodes should be synchronized. A small amount of variation is acceptable, but larger amounts of skew can cause erratic and unexpected behavior. Time synchronization is one of the first things to check if you see unexplained problems in your cluster. It is recommended that you run a Network Time Protocol (NTP) service, or another time-synchronization mechanism, on your cluster, and that all nodes look to the same service for time synchronization. See the link:http://www.tldp.org/LDP/sag/html/basic-ntp-config.html[Basic NTP Configuration] at [citetitle]_The Linux Documentation Project (TLDP)_ to set up NTP.
+  集群节点内的时钟必须同步，有一点小偏差（毫秒级等）影响不大，但偏差太大会影响节点之间通信、超时、心跳等众多问题。 因此建议您运行NTP服务（或其他时间同步服务）来确保节点间的时钟同步，这也是安装分布式服务前需要最先检查的重要操作系统配置之一。 安装NTP参考 link:http://www.tldp.org/LDP/sag/html/basic-ntp-config.html[Basic NTP Configuration] at [citetitle]_The Linux Documentation Project (TLDP)_ 。
 
-Limits on Number of Files and Processes (ulimit)::
-  Apache HBase is a database. It requires the ability to open a large number of files at once. Many Linux distributions limit the number of files a single user is allowed to open to `1024` (or `256` on older versions of OS X). You can check this limit on your servers by running the command `ulimit -n` when logged in as the user which runs HBase. See <<trouble.rs.runtime.filehandles,the Troubleshooting section>> for some of the problems you may experience if the limit is too low. You may also notice errors such as the following:
+文件句柄数和进程数限制 (ulimit)::
+  Apache HBase 是一个数据库，因此需要短时间内打开较多的文件句柄。您可以在HBase用户下运行 `ulimit -n` 来查看当前用户的句柄数（译者注：一般默认是1024，需要往上调整，大多数情况下调至65536问题不大）. 如果limit太低，您可参见 <<trouble.rs.runtime.filehandles,the Troubleshooting section>> 。 在一些情况下，您可能会遇到如下错误:
 +
 ----
 2010-04-06 03:04:37,542 INFO org.apache.hadoop.hdfs.DFSClient: Exception increateBlockOutputStream java.io.EOFException
 2010-04-06 03:04:37,542 INFO org.apache.hadoop.hdfs.DFSClient: Abandoning block blk_-6935524980745310745_1391901
 ----
 +
-It is recommended to raise the ulimit to at least 10,000, but more likely 10,240, because the value is usually expressed in multiples of 1024. Each ColumnFamily has at least one StoreFile, and possibly more than six StoreFiles if the region is under load. The number of open files required depends upon the number of ColumnFamilies and the number of regions. The following is a rough formula for calculating the potential number of open files on a RegionServer.
+建议句柄数上调至10240。 每个列族至少会拥有 1 个 StoreFile, 在负载下甚至可能多至 6 个 StoreFile。列族和region的数目决定了打开的文件句柄数。 以下是一个RegionServer的文件句柄数的大概计算方式。
 +
-.Calculate the Potential Number of Open Files
+.潜在文件句柄数计算方式
 ----
 (StoreFiles per ColumnFamily) x (regions per RegionServer)
 ----
 +
-For example, assuming that a schema had 3 ColumnFamilies per region with an average of 3 StoreFiles per ColumnFamily, and there are 100 regions per RegionServer, the JVM will open `3 * 3 * 100 = 900` file descriptors, not counting open JAR files, configuration files, and others. Opening a file does not take many resources, and the risk of allowing a user to open too many files is minimal.
+举个栗子, 假设 一个 Schema 的每个列族平均有 3 个 StoreFile ，每个 region 有 3 个列族，每个RegionServer大约有100个region，那么 JVM 会打开大约 `3 * 3 * 100 = 900` 个文件句柄（不包含jar、配置等其他的文件打开）。一般来说打开一个文件句柄不会占用太多资源，因此允许一个用户去打开较多的文件句柄相对风险实际并不大。
 +
-Another related setting is the number of processes a user is allowed to run at once. In Linux and Unix, the number of processes is set using the `ulimit -u` command. This should not be confused with the `nproc` command, which controls the number of CPUs available to a given user. Under load, a `ulimit -u` that is too low can cause OutOfMemoryError exceptions. See Jack Levin's major HDFS issues thread on the hbase-users mailing list, from 2011.
+另一个相关的设置是当前用户所允许运行的进程数，Linux/Unix中可使用 `ulimit -u` 设置。注意不要将该命令与 `nproc` 命令混淆， `nproc` 实际控制分配给用户的CPU资源数。如果负载较高时，进程数设置过低可能会引起OOM内存溢出异常。请参考2011年的邮件列表的 `Jack Levin's major HDFS issues`（译者注：对，官网没给链接，自己google吧）。
 +
-Configuring the maximum number of file descriptors and processes for the user who is running the HBase process is an operating system configuration, rather than an HBase configuration. It is also important to be sure that the settings are changed for the user that actually runs HBase. To see which user started HBase, and that user's ulimit configuration, look at the first line of the HBase log for that instance. A useful read setting config on you hadoop cluster is Aaron Kimballs' Configuration Parameters: What can you just ignore?
+文件句柄数与进程数配置是操作系统级别的配置，需注意配置对象必须是HBase运行的用户。可以查看HBase日志的第一行来确定HBase的启动用户（译者注：事实上更通用的方法是 `ps -ef | grep ...` ）。
 +
 .`ulimit` Settings on Ubuntu
 ====
-To configure ulimit settings on Ubuntu, edit _/etc/security/limits.conf_, which is a space-delimited file with four columns. Refer to the man page for _limits.conf_ for details about the format of this file. In the following example, the first line sets both soft and hard limits for the number of open files (nofile) to 32768 for the operating system user with the username hadoop. The second line sets the number of processes to 32000 for the same user.
+编辑_/etc/security/limits.conf_（一个空格分隔的四列的文件）来在Ubuntu配置ulimit。比如以下示例：第一行设置了hadoop用户的 the number of open files (nofile) 的软限制和硬限制（soft/hard limit）为 32768。 第二行设置了hadoop用户的 the number of processes to 32000。
 ----
 hadoop  -       nofile  32768
 hadoop  -       nproc   32000
 ----
-The settings are only applied if the Pluggable Authentication Module (PAM) environment is directed to use them. To configure PAM to use these limits, be sure that the _/etc/pam.d/common-session_ file contains the following line:
+以上配置生效需依赖 Pluggable Authentication Module (PAM) 的配置， 请于 _/etc/pam.d/common-session_ 添加以下内容:
 ----
 session required  pam_limits.so
 ----
 ====
 
 Linux Shell::
-  All of the shell scripts that come with HBase rely on the link:http://www.gnu.org/software/bash[GNU Bash] shell.
+  有标准的bash就行了 : link:http://www.gnu.org/software/bash[GNU Bash] 。
 
 Windows::
-  Prior to HBase 0.96, testing for running HBase on Microsoft Windows was limited.
-  Running a on Windows nodes is not recommended for production systems.
+  生产环境不要用Windows。
 
 
 [[hadoop]]
 === link:http://hadoop.apache.org[Hadoop](((Hadoop)))
 
 The following table summarizes the versions of Hadoop supported with each version of HBase.
-Based on the version of HBase, you should select the most appropriate version of Hadoop.
-You can use Apache Hadoop, or a vendor's distribution of Hadoop.
-No distinction is made here.
-See link:http://wiki.apache.org/hadoop/Distributions%20and%20Commercial%20Support[the Hadoop wiki] for information about vendors of Hadoop.
+下列表格概括了Hadoop版本与HBase版本之间的对应支持关系。基于HBase版本，您需谨慎选择适合的Hadoop版本（包括一些第三方开发版的Hadoop，如HDP、CDH等，See link:http://wiki.apache.org/hadoop/Distributions%20and%20Commercial%20Support[the Hadoop wiki]）。
 
-.Hadoop 2.x is recommended.
+.基于HBase 1.x ，推荐使用Hadoop 2.x
 [TIP]
 ====
-Hadoop 2.x is faster and includes features, such as short-circuit reads, which will help improve your HBase random read profile.
-Hadoop 2.x also includes important bug fixes that will improve your overall HBase experience.
-HBase 0.98 drops support for Hadoop 1.0, deprecates use of Hadoop 1.1+, and HBase 1.0 will not support Hadoop 1.x.
+Hadoop 2.x 更快，修复了许多bug，且包含一些新特性，如 short-circuit reads 可以帮助HBase更快地随机读去HDFS文件。
+HBase 1.0+ 不再支持 Hadoop 1.x，0.98版本已经开始标注Hadoop 1.1 为 Deprecated。
 ====
 
-Use the following legend to interpret this table:
 
-.Hadoop version support matrix
+.Hadoop 版本兼容矩阵表
 
 * "S" = supported
 * "X" = not supported
@@ -368,14 +360,14 @@ For example:
 See also <<casestudies.max.transfer.threads,casestudies.max.transfer.threads>> and note that this property was previously known as `dfs.datanode.max.xcievers` (e.g. link:http://ccgtech.blogspot.com/2010/02/hadoop-hdfs-deceived-by-xciever.html[Hadoop HDFS: Deceived by Xciever]).
 
 [[zookeeper.requirements]]
-=== ZooKeeper Requirements
+=== Zookeeper依赖（ZooKeeper Requirements）
 
-ZooKeeper 3.4.x is required as of HBase 1.0.0.
+ZooKeeper 3.4.x 是 HBase 1.0.0 的基础组件之一.
 HBase makes use of the `multi` functionality that is only available since 3.4.0 (The `useMulti` configuration option defaults to `true` in HBase 1.0.0).
-See link:https://issues.apache.org/jira/browse/HBASE-12241[HBASE-12241 (The crash of regionServer when taking deadserver's replication queue breaks replication)] and link:https://issues.apache.org/jira/browse/HBASE-6775[HBASE-6775 (Use ZK.multi when available for HBASE-6710 0.92/0.94 compatibility fix)] for background.
+参见背景： link:https://issues.apache.org/jira/browse/HBASE-12241[HBASE-12241 (The crash of regionServer when taking deadserver's replication queue breaks replication)] and link:https://issues.apache.org/jira/browse/HBASE-6775[HBASE-6775 (Use ZK.multi when available for HBASE-6710 0.92/0.94 compatibility fix)] 。
 
 [[standalone_dist]]
-== HBase run modes: Standalone and Distributed
+== HBase运行模式（HBase run modes: Standalone and Distributed）
 
 HBase has two run modes: <<standalone,standalone>> and <<distributed,distributed>>.
 Out of the box, HBase runs in standalone mode.
@@ -384,22 +376,23 @@ At a minimum, you must edit [code]+conf/hbase-env.sh+ to tell HBase which +java+
 In this file you set HBase environment variables such as the heapsize and other options for the `JVM`, the preferred location for log files, etc.
 Set [var]+JAVA_HOME+ to point at the root of your +java+ install.
 
-[[standalone]]
-=== Standalone HBase
+HBase有两个运行模式: <<standalone,standalone>> & <<distributed,distributed>>。 默认是单机模式，如果要分布式模式你需要编辑 conf 文件夹中的配置文件。
 
-This is the default mode.
-Standalone mode is what is described in the <<quickstart,quickstart>> section.
-In standalone mode, HBase does not use HDFS -- it uses the local filesystem instead -- and it runs all HBase daemons and a local ZooKeeper all up in the same JVM.
-Zookeeper binds to a well known port so clients may talk to HBase.
+不管是什么模式，你都需要编辑 conf/hbase-env.sh 来告知HBase java的安装路径。在这个文件里你还可以设置HBase的运行环境，诸如 heapsize 和其他 JVM 有关的选项, 还有Log文件地址等。 设置 JAVA_HOME指向 java安装的路径。
+
+
+[[standalone]]
+=== 单机模式（Standalone HBase）
+
+这是默认的模式，在 <<quickstart,quickstart>> 一章中介绍的就是这个模式. 在单机模式中，HBase使用本地文件系统，而不是HDFS ，所有的服务和zooKeeper都运作在一个JVM中。zookeep监听一个端口，这样客户端就可以连接HBase了。
 
 === Distributed
 
-Distributed mode can be subdivided into distributed but all daemons run on a single node -- a.k.a _pseudo-distributed_ -- and _fully-distributed_ where the daemons are spread across all nodes in the cluster.
-The _pseudo-distributed_ vs. _fully-distributed_ nomenclature comes from Hadoop.
+分布式模式分两种。伪分布式模式是把进程运行在一台机器上，但不是一个JVM；而完全分布式模式就是把整个服务被分布在各个节点上。这种概念来自Hadoop。
 
 Pseudo-distributed mode can run against the local filesystem or it can run against an instance of the _Hadoop Distributed File System_ (HDFS). Fully-distributed mode can ONLY run on HDFS.
-See the Hadoop link:http://hadoop.apache.org/docs/current/[documentation] for how to set up HDFS.
-A good walk-through for setting up HDFS on Hadoop 2 can be found at http://www.alexjf.net/blog/distributed-systems/hadoop-yarn-installation-definitive-guide.
+HDFS 的搭建教程参考 link:http://hadoop.apache.org/docs/current/[documentation] ，同时可参见一个较完整的guide
+  http://www.alexjf.net/blog/distributed-systems/hadoop-yarn-installation-definitive-guide.
 
 [[pseudo]]
 ==== Pseudo-distributed
@@ -504,56 +497,48 @@ If for example, you want to run with a replication factor of 5, HBase will creat
 [[confirm]]
 == Running and Confirming Your Installation
 
-Make sure HDFS is running first.
-Start and stop the Hadoop HDFS daemons by running _bin/start-hdfs.sh_ over in the `HADOOP_HOME` directory.
-You can ensure it started properly by testing the `put` and `get` of files into the Hadoop filesystem.
-HBase does not normally use the MapReduce or YARN daemons. These do not need to be started.
+首先确认你的HDFS是运行着的。你可以运行HADOOP_HOME中的 bin/start-hdfs.sh 来启动HDFS。你可以通过put命令来测试放一个文件，然后有get命令来读这个文件。通常情况下HBase是不会运行mapreduce的，所以不需要检查MR。
 
-_If_ you are managing your own ZooKeeper, start it and confirm it's running, else HBase will start up ZooKeeper for you as part of its start process.
+如果你自己管理ZooKeeper集群，你需要确认它是运行着的。如果是HBase托管，ZoopKeeper 会随HBase启动。
 
-Start HBase with the following command:
+用如下命令启动HBase:
 
 ----
 bin/start-hbase.sh
 ----
 
-Run the above from the `HBASE_HOME` directory.
+这个脚本在HBASE_HOME目录里面。
+你现在已经启动HBase了。HBase把log记在 logs 子目录里面. 当HBase启动出问题的时候，可以看看Log.
 
-You should now have a running HBase instance.
-HBase logs can be found in the _logs_ subdirectory.
-Check them out especially if HBase had trouble starting.
+HBase也有一个UI界面，上面会列出重要的属性。默认是在Master的16010端口上(HBase RegionServers 会默认绑定 16020端口，在端口16030上有一个展示信息的HTTP界面 )。如果Master运行在 master.example.org，端口是默认的话，你可以用浏览器在 http://master.example.org:16010看到主界面. .
 
-HBase also puts up a UI listing vital attributes.
-By default it's deployed on the Master host at port 16010 (HBase RegionServers listen on port 16020 by default and put up an informational HTTP server at port 16030). If the Master is running on a host named `master.example.org` on the default port, point your browser at _http://master.example.org:16010_ to see the web interface.
+0.98 之前的版本默认端口不是16xxx，而是60xxx，比如60010为UI端口。
 
-Prior to HBase 0.98 the master UI was deployed on port 60010, and the HBase RegionServers UI on port 60030.
+HBase启动后，参见 <<shell_exercises,shell exercises>> 可以看到如何建表，插入数据，scan你的表，还有disable这个表，最后把它删掉。
 
-Once HBase has started, see the <<shell_exercises,shell exercises>> section for how to create tables, add data, scan your insertions, and finally disable and drop your tables.
-
-To stop HBase after exiting the HBase shell enter
+退出shell后可以尝试停止HBase。
 
 ----
 $ ./bin/stop-hbase.sh
 stopping hbase...............
 ----
 
-Shutdown can take a moment to complete.
-It can take longer if your cluster is comprised of many machines.
-If you are running a distributed operation, be sure to wait until HBase has shut down completely before stopping the Hadoop daemons.
+停止操作需要一些时间，你的集群越大，停的时间可能会越长。如果你正在运行一个分布式的操作，要确认在HBase彻底停止之前，Hadoop不能停.
+
+
 
 [[config.files]]
-== Default Configuration
+== 默认配置（Default Configuration）
 
 [[hbase.site]]
 === _hbase-site.xml_ and _hbase-default.xml_
 
-Just as in Hadoop where you add site-specific HDFS configuration to the _hdfs-site.xml_ file, for HBase, site specific customizations go into the file _conf/hbase-site.xml_.
-For the list of configurable properties, see <<hbase_default_configurations,hbase default configurations>> below or view the raw _hbase-default.xml_ source file in the HBase source code at _src/main/resources_. 
+正如Hadoop放置HDFS的配置文件hdfs-site.xml，HBase的配置文件是 conf/hbase-site.xml. 你可以在 <<hbase_default_configurations,hbase default configurations>> 找到配置的属性列表。你也可以在src/main/resources目录下找到hbase-default.xml。
 
-Not all configuration options make it out to _hbase-default.xml_.
-Configuration that it is thought rare anyone would change can exist only in code; the only way to turn up such configurations is via a reading of the source code itself.
+不是所有的配置都在 hbase-default.xml出现。只要改了代码，配置就有可能改变，所以唯一了解这些被改过的配置的办法是读源代码本身。
 
-Currently, changes here will require a cluster restart for HBase to notice the change.
+要注意的是，要重启集群才能使配置生效。
+
 // hbase/src/main/asciidoc
 //
 include::../../../../target/asciidoc/hbase-default.adoc[]
@@ -562,24 +547,19 @@ include::../../../../target/asciidoc/hbase-default.adoc[]
 [[hbase.env.sh]]
 === _hbase-env.sh_
 
-Set HBase environment variables in this file.
-Examples include options to pass the JVM on start of an HBase daemon such as heap size and garbage collector configs.
-You can also set configurations for HBase configuration, log directories, niceness, ssh options, where to locate process pid files, etc.
-Open the file at _conf/hbase-env.sh_ and peruse its content.
-Each option is fairly well documented.
-Add your own environment variables here if you want them read by HBase daemons on startup.
+在这个文件里面设置HBase环境变量。比如可以配置JVM启动的堆大小或者GC的参数。你还可在这里配置HBase的参数，如Log位置，niceness(译者注:优先级)，ssh参数还有pid文件的位置等等。打开文件conf/hbase-env.sh细读其中的内容。每个选项都是有详尽的注释的。你可以在此添加自己的环境变量。
 
-Changes here will require a cluster restart for HBase to notice the change.
+这个文件的改动只有HBase重启才能生效。
 
 [[log4j]]
 === _log4j.properties_
 
-Edit this file to change rate at which HBase files are rolled and to change the level at which HBase logs messages.
+编辑这个文件可以改变HBase的日志的级别，轮滚策略等等。
 
-Changes here will require a cluster restart for HBase to notice the change though log levels can be changed for particular daemons via the HBase UI.
+通过HBase UI可以修改log4j配置，但实际上这个文件的改动只有HBase重启才能生效。
 
 [[client_dependencies]]
-=== Client configuration and dependencies connecting to an HBase cluster
+=== 连接HBase的客户端配置与依赖（Client configuration and dependencies connecting to an HBase cluster）
 
 If you are running HBase in standalone mode, you don't need to configure anything for your client to work provided that they are all on the same machine.
 
@@ -588,9 +568,9 @@ ZooKeeper is where all these values are kept.
 Thus clients require the location of the ZooKeeper ensemble before they can do anything else.
 Usually this the ensemble location is kept out in the _hbase-site.xml_ and is picked up by the client from the `CLASSPATH`.
 
-If you are configuring an IDE to run a HBase client, you should include the _conf/_ directory on your classpath so _hbase-site.xml_ settings can be found (or add _src/test/resources_ to pick up the hbase-site.xml used by tests). 
+If you are configuring an IDE to run a HBase client, you should include the _conf/_ directory on your classpath so _hbase-site.xml_ settings can be found (or add _src/test/resources_ to pick up the hbase-site.xml used by tests).
 
-Minimally, a client of HBase needs several libraries in its `CLASSPATH` when connecting to a cluster, including:
+HBase客户端的classpath至少需要包括如下的jar:
 [source]
 ----
 
@@ -605,7 +585,7 @@ slf4j-log4j (slf4j-log4j12-1.5.8.jar)
 zookeeper (zookeeper-3.4.2.jar)
 ----
 
-An example basic _hbase-site.xml_ for client only might look as follows: 
+一个基本的客户端示例 _hbase-site.xml_ 可能如下:
 [source,xml]
 ----
 <?xml version="1.0"?>
@@ -621,12 +601,11 @@ An example basic _hbase-site.xml_ for client only might look as follows:
 ----
 
 [[java.client.config]]
-==== Java client configuration
+==== Java客户端配置（Java client configuration）
 
-The configuration used by a Java client is kept in an link:http://hbase.apache.org/apidocs/org/apache/hadoop/hbase/HBaseConfiguration[HBaseConfiguration] instance.
+Java客户端的配置存放在实例 link:http://hbase.apache.org/apidocs/org/apache/hadoop/hbase/HBaseConfiguration[HBaseConfiguration] 中。
 
-The factory method on HBaseConfiguration, `HBaseConfiguration.create();`, on invocation, will read in the content of the first _hbase-site.xml_ found on the client's `CLASSPATH`, if one is present (Invocation will also factor in any _hbase-default.xml_ found; an _hbase-default.xml_ ships inside the _hbase.X.X.X.jar_). It is also possible to specify configuration directly without having to read from a _hbase-site.xml_.
-For example, to set the ZooKeeper ensemble for the cluster programmatically do as follows:
+HBaseConfiguration有一个工厂方法, HBaseConfiguration.create();,运行这个方法的时候，他会去CLASSPATH 下找hbase-site.xml，读他发现的第一个配置文件的内容。 (这个方法还会去找hbase-default.xml ; hbase.X.X.X.jar里面也会有一个an hbase-default.xml). 不使用任何hbase-site.xml文件直接通过Java代码注入配置信息也是可以的。例如，你可以用编程的方式设置ZooKeeper信息，只要这样做:
 
 [source,java]
 ----
@@ -634,7 +613,7 @@ Configuration config = HBaseConfiguration.create();
 config.set("hbase.zookeeper.quorum", "localhost");  // Here we are running zookeeper locally
 ----
 
-If multiple ZooKeeper instances make up your ZooKeeper ensemble, they may be specified in a comma-separated list (just as in the _hbase-site.xml_ file). This populated `Configuration` instance can then be passed to an link:http://hbase.apache.org/apidocs/org/apache/hadoop/hbase/client/Table.html[Table], and so on.
+如果有多ZooKeeper实例，你可以使用逗号列表。(就像在hbase-site.xml 文件中做得一样). 这个 Configuration 实例会被传递到 link:http://hbase.apache.org/apidocs/org/apache/hadoop/hbase/client/Table.html[Table], 之类的实例里面去.
 
 [[example_config]]
 == Example Configurations
@@ -750,32 +729,27 @@ Disable this functionality if you are running more than one Master: i.e. a backu
 Failing to do so, the dying Master may continue to receive RPCs though another Master has assumed the role of primary.
 See the configuration <<fail.fast.expired.active.master,fail.fast.expired.active.master>>.
 
-=== Recommended Configurations
+=== 推荐配置（Recommended Configurations）
 
 [[recommended_configurations.zk]]
-==== ZooKeeper Configuration
+==== Zookeeper配置（ZooKeeper Configuration）
 
 [[sect.zookeeper.session.timeout]]
 ===== `zookeeper.session.timeout`
 
-The default timeout is three minutes (specified in milliseconds). This means that if a server crashes, it will be three minutes before the Master notices the crash and starts recovery.
-You might like to tune the timeout down to a minute or even less so the Master notices failures the sooner.
-Before changing this value, be sure you have your JVM garbage collection configuration under control otherwise, a long garbage collection that lasts beyond the ZooKeeper session timeout will take out your RegionServer (You might be fine with this -- you probably want recovery to start on the server if a RegionServer has been in GC for a long period of time).
+这个默认值是3分钟。这意味着一旦一个server宕掉了，Master至少需要3分钟才能察觉到宕机，开始恢复。你可能希望将这个超时调短，这样Master就能更快的察觉到了。在你调这个值之前，你需要确认你的JVM的GC参数，否则一个长时间的GC操作就可能导致超时。（当一个RegionServer在运行一个长时间的GC的时候，你可能想要重启并恢复它）.
 
-To change this configuration, edit _hbase-site.xml_, copy the changed file around the cluster and restart.
+要想改变这个配置，可以编辑 hbase-site.xml, 将配置部署到全部集群，然后重启。
 
-We set this value high to save our having to field questions up on the mailing lists asking why a RegionServer went down during a massive import.
-The usual cause is that their JVM is untuned and they are running into long GC pauses.
-Our thinking is that while users are getting familiar with HBase, we'd save them having to know all of its intricacies.
-Later when they've built some confidence, then they can play with configuration such as this.
+我们之所以把这个值调的很高，是因为我们不想一天到晚在论坛里回答新手的问题。“为什么我在执行一个大规模数据导入的时候Region Server死掉啦”，通常这样的问题是因为长时间的GC操作引起的，他们的JVM没有调优。我们是这样想的，如果一个人对HBase不很熟悉，不能期望他知道所有的问题。等到他逐渐熟悉了，他就可以自己调这个参数了。
 
 [[zookeeper.instances]]
-===== Number of ZooKeeper Instances
+===== Zookeeper实例数目（Number of ZooKeeper Instances）
 
-See <<zookeeper,zookeeper>>.
+参见 <<zookeeper,zookeeper>>.
 
 [[recommended.configurations.hdfs]]
-==== HDFS Configurations
+==== HDFS配置（HDFS Configurations）
 
 [[dfs.datanode.failed.volumes.tolerated]]
 ===== dfs.datanode.failed.volumes.tolerated
@@ -787,30 +761,25 @@ You might want to set this to about half the amount of your available disks.
 [[hbase.regionserver.handler.count_description]]
 ==== `hbase.regionserver.handler.count`
 
-This setting defines the number of threads that are kept open to answer incoming requests to user tables.
-The rule of thumb is to keep this number low when the payload per request approaches the MB (big puts, scans using a large cache) and high when the payload is small (gets, small puts, ICVs, deletes). The total size of the queries in progress is limited by the setting `hbase.ipc.server.max.callqueue.size`.
+这个设置决定了处理用户请求的线程数量，默认是10。这个值设的比较小，主要是为了预防用户用一个比较大的写缓冲，同时如果还有较多客户端并发，这样region servers会垮掉。有经验的做法是，当请求内容很大(上MB，如大puts, 使用缓存的scans)的时候，把这个值调低。请求内容较小的时候(gets, 小puts, ICVs, deletes)，把这个值调大。（译者注：其实就是确保总的请求内存不要太大，粗略评估就是 handler-count * mem-per-request）
 
-It is safe to set that number to the maximum number of incoming clients if their payload is small, the typical example being a cluster that serves a website since puts aren't typically buffered and most of the operations are gets.
+当客户端的单个请求内容很小的时候，把这个值设置的和最大客户端数量一致是可接受的，甚至可以提升性能。一个典型的例子就是一个给网站服务的集群，put操作一般不会缓冲，绝大多数的操作是get操作。
 
-The reason why it is dangerous to keep this setting high is that the aggregate size of all the puts that are currently happening in a region server may impose too much pressure on its memory, or even trigger an OutOfMemoryError.
-A RegionServer running on low memory will trigger its JVM's garbage collector to run more frequently up to a point where GC pauses become noticeable (the reason being that all the memory used to keep all the requests' payloads cannot be trashed, no matter how hard the garbage collector tries). After some time, the overall cluster throughput is affected since every request that hits that RegionServer will take longer, which exacerbates the problem even more.
+把这个值放大的危险之处在于，把所有的Put操作缓冲意味着对内存有很大的压力，甚至会导致OutOfMemory。一个内存不够大的RegionServer会频繁的触发GC操作，渐渐用户就能感受到停顿。(因为所有请求内容所占用的内存不管GC执行几遍也是不能回收的)。一段时间后，集群也会受到影响，因为所有的指向这个region的请求都会变慢。这样就会拖累集群，加剧了这个问题。
 
-You can get a sense of whether you have too little or too many handlers by <<rpc.logging,rpc.logging>> on an individual RegionServer then tailing its logs (Queued requests consume memory).
+你可以根据 <<rpc.logging,rpc.logging>> 在单个RegionServer启动log并查看log末尾 (请求队列消耗内存)，去评估自己的该配置是否过大或过小。
 
 [[big_memory]]
-==== Configuration for large memory machines
+==== 大内存机器的配置（Configuration for large memory machines）
 
-HBase ships with a reasonable, conservative configuration that will work on nearly all machine types that people might want to test with.
-If you have larger machines -- HBase has 8G and larger heap -- you might the following configuration options helpful.
-TODO.
+HBase有一个合理的保守的配置，这样可以运作在所有的机器上。如果你有台大内存的集群-HBase有8G或者更大的heap，接下来的配置可能会帮助你。 TODO. (译者注：TODO是官方这么写的，实际的大多数线上集群应该在20~50g左右，可以参考许多大公司分享的内存配置案例，包括GC配置等)
 
 [[config.compression]]
-==== Compression
+==== 压缩（Compression）
 
-You should consider enabling ColumnFamily compression.
-There are several options that are near-frictionless and in most all cases boost performance by reducing the size of StoreFiles and thus reducing I/O.
+应该考虑启用 ColumnFamily 压缩。有好几个选项，通过降低存储文件大小以降低IO，降低消耗且大多情况下提高性能。
 
-See <<compression,compression>> for more information.
+参见 <<compression,compression>>
 
 [[config.wals]]
 ==== Configuring the size and number of WAL files
@@ -824,7 +793,7 @@ It is recommended to allocate enough WAL files to store at least that much data 
 However, as all memstores are not expected to be full all the time, less WAL files can be allocated.
 
 [[disable.splitting]]
-==== Managed Splitting
+==== Splitting管理（Managed Splitting）
 
 HBase generally handles splitting your regions, based upon the settings in your _hbase-default.xml_ and _hbase-site.xml_          configuration files.
 Important settings include `hbase.regionserver.region.split.policy`, `hbase.hregion.max.filesize`, `hbase.regionserver.regionSplitLimit`.
@@ -862,53 +831,46 @@ If the regions are split into too many large regions, you can increase the major
 HBase 0.90 introduced `org.apache.hadoop.hbase.util.RegionSplitter`, which provides a network-IO-safe rolling split of all regions.
 
 [[managed.compactions]]
-==== Managed Compactions
+==== Compactions管理（Managed Compactions）
 
-By default, major compactions are scheduled to run once in a 7-day period.
-Prior to HBase 0.96.x, major compactions were scheduled to happen once per day by default.
+默认 major compaction 周期是七天一次，0.96.x之前的版本是默认一天一次。如果需要精确控制 major compaction 的时间和周期，可以禁止周期性 major compaction。
+细节参见 <<compaction.parameters,compaction.parameters>> 的 `hbase.hregion.majorcompaction`。
+（译者注：major compaction 会比较影响性能，一些对性能要求高的HBase集群会禁止周期性自动的 major compaction 而改为手动在闲时触发）
 
-If you need to control exactly when and how often major compaction runs, you can disable managed major compactions.
-See the entry for `hbase.hregion.majorcompaction` in the <<compaction.parameters,compaction.parameters>> table for details.
 
-.Do Not Disable Major Compactions
+.请勿完全禁止 major compaction
 [WARNING]
 ====
-Major compactions are absolutely necessary for StoreFile clean-up.
-Do not disable them altogether.
-You can run major compactions manually via the HBase shell or via the http://hbase.apache.org/apidocs/org/apache/hadoop/hbase/client/Admin.html#majorCompact(org.apache.hadoop.hbase.TableName)[Admin API].
+Major compactions 是清理归并 StoreFile 必须的操作，因此请勿完全禁止。
+您可以在hbase shell 或通过 HBaseAdmin API 去手动触发。 http://hbase.apache.org/apidocs/org/apache/hadoop/hbase/client/Admin.html#majorCompact(org.apache.hadoop.hbase.TableName)[Admin API]
 ====
 
-For more information about compactions and the compaction file selection process, see <<compaction,compaction>>
+更多 compaction 细节参见 <<compaction,compaction>>
 
 [[spec.ex]]
-==== Speculative Execution
+==== 推测执行（Speculative Execution）
 
-Speculative Execution of MapReduce tasks is on by default, and for HBase clusters it is generally advised to turn off Speculative Execution at a system-level unless you need it for a specific case, where it can be configured per-job.
-Set the properties `mapreduce.map.speculative` and `mapreduce.reduce.speculative` to false.
+MapReduce任务的预测执行缺省是打开的，HBase集群一般建议在系统级关闭预测执行，除非在某种特殊情况下需要打开，此时可以每任务配置。设置mapred.map.tasks.speculative.execution 和 mapred.reduce.tasks.speculative.execution 为 false。
 
 [[other_configuration]]
 === Other Configurations
 
 [[balancer_config]]
-==== Balancer
+==== 负载均衡（Balancer）
 
-The balancer is a periodic operation which is run on the master to redistribute regions on the cluster.
-It is configured via `hbase.balancer.period` and defaults to 300000 (5 minutes).
+负载均衡器(LoadBalancer)是在主服务器上运行的定期操作，以重新分布集群区域。通过hbase.balancer.period 设置，缺省值300000 (5 分钟).
 
-See <<master.processes.loadbalancer,master.processes.loadbalancer>> for more information on the LoadBalancer.
+参见 <<master.processes.loadbalancer,master.processes.loadbalancer>> 获取更多细节关于 LoadBalancer.
 
 [[disabling.blockcache]]
-==== Disabling Blockcache
+==== 禁止块缓存（Disabling Blockcache）
 
-Do not turn off block cache (You'd do it by setting `hbase.block.cache.size` to zero). Currently we do not do well if you do this because the RegionServer will spend all its time loading HFile indices over and over again.
-If your working set it such that block cache does you no good, at least size the block cache such that HFile indices will stay up in the cache (you can get a rough idea on the size you need by surveying RegionServer UIs; you'll see index block size accounted near the top of the webpage).
+不要关闭块缓存 (通过hbase.block.cache.size 为 0 来设置)。当前如果关闭块缓存会很不好，因为区域服务器会花很多时间不停加载hfile指数。如果工作集如此配置块缓存没有好处，最少应保证hfile指数保存在块缓存内的大小(可以通过查询区域服务器的UI，得到大致的数值。可以看到网页的上方有块指数值统计)。
 
 [[nagles]]
-==== link:http://en.wikipedia.org/wiki/Nagle's_algorithm[Nagle's] or the small package problem
+==== link:http://en.wikipedia.org/wiki/Nagle's_algorithm[Nagle's] 或小包问题
 
-If a big 40ms or so occasional delay is seen in operations against HBase, try the Nagles' setting.
-For example, see the user mailing list thread, link:http://search-hadoop.com/m/pduLg2fydtE/Inconsistent+scan+performance+with+caching+set+&subj=Re+Inconsistent+scan+performance+with+caching+set+to+1[Inconsistent scan performance with caching set to 1] and the issue cited therein where setting `notcpdelay` improved scan speeds.
-You might also see the graphs on the tail of link:https://issues.apache.org/jira/browse/HBASE-7008[HBASE-7008 Set scanner caching to a better default] where our Lars Hofhansl tries various data sizes w/ Nagle's on and off measuring the effect.
+如果操作 HBase 时看到大量40ms左右的偶然延时，尝试Nagles配置。如，参考用户邮件列表 link:http://search-hadoop.com/m/pduLg2fydtE/Inconsistent+scan+performance+with+caching+set+&subj=Re+Inconsistent+scan+performance+with+caching+set+to+1[Inconsistent scan performance with caching set to 1] ，该 issue 在其中启用tcpNoDelay (译者注，本英文原文notcpdelay有误) 提高了扫描速度。你也可以查看该文档的尾部图表：link:https://issues.apache.org/jira/browse/HBASE-7008[HBASE-7008 Set scanner caching to a better default]，Lars Hofhansl 尝试了各种不同的数据大小，Nagle打开或关闭的测量结果。
 
 [[mttr]]
 ==== Better Mean Time to Recover (MTTR)
@@ -986,7 +948,7 @@ See the link:http://docs.oracle.com/javase/6/docs/technotes/guides/management/ag
 Historically, besides above port mentioned, JMX opens two additional random TCP listening ports, which could lead to port conflict problem. (See link:https://issues.apache.org/jira/browse/HBASE-10289[HBASE-10289] for details)
 
 As an alternative, You can use the coprocessor-based JMX implementation provided by HBase.
-To enable it in 0.99 or above, add below property in _hbase-site.xml_: 
+To enable it in 0.99 or above, add below property in _hbase-site.xml_:
 
 [source,xml]
 ----
@@ -1017,7 +979,7 @@ The registry port can be shared with connector port in most cases, so you only n
 However if you want to use SSL communication, the 2 ports must be configured to different values.
 
 By default the password authentication and SSL communication is disabled.
-To enable password authentication, you need to update _hbase-env.sh_          like below: 
+To enable password authentication, you need to update _hbase-env.sh_          like below:
 [source,bash]
 ----
 export HBASE_JMX_BASE="-Dcom.sun.management.jmxremote.authenticate=true                  \
@@ -1044,7 +1006,7 @@ keytool -export -alias jconsole -keystore myKeyStore -file jconsole.cert
 keytool -import -alias jconsole -keystore jconsoleKeyStore -file jconsole.cert
 ----
 
-And then update _hbase-env.sh_ like below: 
+And then update _hbase-env.sh_ like below:
 
 [source,bash]
 ----
@@ -1059,14 +1021,14 @@ export HBASE_MASTER_OPTS="$HBASE_MASTER_OPTS $HBASE_JMX_BASE "
 export HBASE_REGIONSERVER_OPTS="$HBASE_REGIONSERVER_OPTS $HBASE_JMX_BASE "
 ----
 
-Finally start `jconsole` on the client using the key store:
+最后客户端侧启动 `jconsole` on the client using the key store:
 
 [source,bash]
 ----
 jconsole -J-Djavax.net.ssl.trustStore=/home/tianq/jconsoleKeyStore
 ----
 
-NOTE: To enable the HBase JMX implementation on Master, you also need to add below property in _hbase-site.xml_: 
+NOTE: 要启用Master的 HBase JMX 实现, 以下配置需添加到 _hbase-site.xml_:
 
 [source,xml]
 ----
@@ -1076,17 +1038,16 @@ NOTE: To enable the HBase JMX implementation on Master, you also need to add bel
 </property>
 ----
 
-The corresponding properties for port configuration are `master.rmi.registry.port` (by default 10101) and `master.rmi.connector.port` (by default the same as registry.port)
+相关的端口配置项为 `master.rmi.registry.port` (by default 10101) and `master.rmi.connector.port` (by default the same as registry.port)
 
 [[dyn_config]]
-== Dynamic Configuration
+== 动态配置（Dynamic Configuration）
 
-Since HBase 1.0.0, it is possible to change a subset of the configuration without requiring a server restart.
-In the HBase shell, there are new operators, `update_config` and `update_all_config` that will prompt a server or all servers to reload configuration.
+从 HBase 1.0.0 起, 一部分配置的改变与生效可不需要重启服务，我们称其为动态配置.
+您可在 hbase shell 中执行 `update_config` 和 `update_all_config` 来更新当前节点的server或所有节点的server去重新加载动态配置。
 
-Only a subset of all configurations can currently be changed in the running server.
-Here is an incomplete list: `hbase.regionserver.thread.compaction.large`, `hbase.regionserver.thread.compaction.small`, `hbase.regionserver.thread.split`, `hbase.regionserver.thread.merge`, as well as compaction policy and configurations and adjustment to offpeak hours.
-For the full list consult the patch attached to  link:https://issues.apache.org/jira/browse/HBASE-12147[HBASE-12147 Porting Online Config Change from 89-fb].
+以下为部分的动态配置示例: `hbase.regionserver.thread.compaction.large`, `hbase.regionserver.thread.compaction.small`, `hbase.regionserver.thread.split`, `hbase.regionserver.thread.merge`, compaction的policy、configuration和触发时间的调整等。
+较为完整的动态配置列表可参见  link:https://issues.apache.org/jira/browse/HBASE-12147[HBASE-12147 Porting Online Config Change from 89-fb].
 
 ifdef::backend-docbook[]
 [index]
